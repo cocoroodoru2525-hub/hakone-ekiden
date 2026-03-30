@@ -68,10 +68,3 @@ export default async function ResultsPage() {
     </main>
   )
 }
-```
-
-保存できたらターミナルで：
-```
-git add .
-git commit -m "第102回総合成績ページ（公式データ）"
-git push
