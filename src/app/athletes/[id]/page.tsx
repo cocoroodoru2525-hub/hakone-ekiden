@@ -82,7 +82,7 @@ export default function AthleteDetailPage() {
     setCheers(prev => [{ id: 0, from_name: fromName, message, created_at: new Date().toISOString() }, ...prev])
   }
 
-  const eventLabel: Record<string, string> = {
+  const eventLabel: { [key: string]: string } = {
     '5000m': '5000m', '10000m': '10000m', 'half': 'ハーフ'
   }
 
