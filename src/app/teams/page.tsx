@@ -4,7 +4,7 @@ export default async function TeamsPage() {
   const { data: teams } = await supabase
     .from('hk_teams')
     .select('*')
-    .order('name')
+    .order('sort_order')
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
