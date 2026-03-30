@@ -235,7 +235,7 @@ export default function AthletesPage() {
         <div className="max-w-2xl mx-auto px-6 py-12 text-center">
           <div className="text-gray-600 text-sm mb-8">応援したい選手の名前を入力してください</div>
           <div className="grid grid-cols-3 gap-3">
-            {['黒田 朝日', '高山 豪起', '吉岡 大翔', '山口 智規', '佐藤 圭汰', '青木 瑠郁'].map(name => (
+            {[ '佐藤 愛斗','辻原 輝','野中 恒亨', '池間 凛斗',  '吉岡 大翔', '小池 莉希', '岡田 開成', '楠岡 由浩'].map(name => (
               <button key={name} onClick={() => { setQuery(name); }}
                 className="bg-gray-900 border border-gray-800 hover:border-gray-600 rounded-lg py-3 text-sm text-gray-300">
                 {name}
