@@ -93,7 +93,6 @@ export default function AthletesPage() {
                     {a.name.charAt(0)}
                   </div>
                   <div className="text-sm font-medium mb-1">{a.name}</div>
-                  <div className="text-xs text-gray-500 mb-1">{a.name_kana}</div>
                   <div className="text-xs text-gray-400">{a.hk_teams?.short_name ?? a.hk_teams?.name}</div>
                   <div className="text-xs text-gray-600 mt-1">{a.grade}年</div>
                 </div>
