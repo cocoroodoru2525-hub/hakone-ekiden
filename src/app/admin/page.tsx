@@ -40,9 +40,10 @@ export default function AdminPage() {
   })
 
   function timeToSeconds(t: string): number {
-    const parts = t.split(':').map(Number)
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]
-    if (parts.length === 2) return parts[0] * 60 + parts[1]
+    const clean = t.replace(',', '.').trim()
+    const parts = clean.split(':')
+    if (parts.length === 3) return Number(parts[0]) * 3600 + Number(parts[1]) * 60 + Number(parts[2])
+    if (parts.length === 2) return Number(parts[0]) * 60 + Number(parts[1])
     return 0
   }
 
