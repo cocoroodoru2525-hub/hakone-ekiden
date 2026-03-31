@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { scrapeAllEventRecords } from '@/lib/scrapers/records-scraper'
 import { insertRecordWithPB } from '@/lib/pb-detector'
 import { findOrCreateAthlete } from '@/lib/find-or-create-athlete'
+import { findOrCreateTeam } from '@/lib/find-or-create-team'
 
 export async function GET(request: NextRequest) {
   // Vercel Cronからの呼び出しを認証
@@ -28,16 +29,17 @@ export async function GET(request: NextRequest) {
     let skipped = 0
     let pbUpdated = 0
     let athletesCreated = 0
+    let teamsCreated = 0
+    const originalTeamIds = new Set(teams.map(t => t.id))
 
     for (const rec of allRecords) {
-      // チームマッチング
-      const team = teams.find(t =>
-        rec.team_name.includes(t.short_name || t.name) ||
-        (t.short_name || t.name).includes(rec.team_name) ||
-        rec.team_name.includes(t.name) ||
-        t.name.includes(rec.team_name)
-      )
+      // チームマッチング（見つからなければ自動作成）
+      const team = await findOrCreateTeam(supabaseAdmin, teams, rec.team_name)
       if (!team) { skipped++; continue }
+      if (!originalTeamIds.has(team.id)) {
+        originalTeamIds.add(team.id)
+        teamsCreated++
+      }
 
       // 選手を検索、未登録なら自動作成（Cronは常にautoCreate=true）
       const athlete = await findOrCreateAthlete(
@@ -72,7 +74,7 @@ export async function GET(request: NextRequest) {
       status: 'success',
       inserted_count: inserted,
       updated_count: pbUpdated,
-      raw_log: { totalScraped: allRecords.length, skipped, athletesCreated },
+      raw_log: { totalScraped: allRecords.length, skipped, athletesCreated, teamsCreated },
     })
 
     return Response.json({
@@ -82,6 +84,7 @@ export async function GET(request: NextRequest) {
       pbUpdated,
       skipped,
       athletesCreated,
+      teamsCreated,
     })
   } catch (e: any) {
     try {

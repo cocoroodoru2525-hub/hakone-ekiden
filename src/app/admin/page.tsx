@@ -158,7 +158,7 @@ export default function AdminPage() {
 
   // --- 学校追加 ---
   const [teamForm, setTeamForm] = useState({
-    name: '', short_name: '', color_code: '#C8102E', sort_order: ''
+    name: '', short_name: '', color_code: '#C8102E', sort_order: '', category: 'main'
   })
   const [teamList, setTeamList] = useState<any[]>([])
 
@@ -169,7 +169,7 @@ export default function AdminPage() {
   async function loadTeams() {
     const { data } = await supabase
       .from('hk_teams')
-      .select('id, name, short_name, color_code, sort_order')
+      .select('id, name, short_name, color_code, sort_order, category')
       .order('sort_order')
     if (data) setTeamList(data)
   }
@@ -196,6 +196,7 @@ export default function AdminPage() {
       short_name: shortName,
       color_code: teamForm.color_code,
       sort_order: sortOrder,
+      category: teamForm.category,
     })
     setLoading(false)
     if (error) {
@@ -203,7 +204,7 @@ export default function AdminPage() {
       return
     }
     setMsg(`学校を追加しました: ${teamForm.name}（順位: ${sortOrder}）`)
-    setTeamForm({ name: '', short_name: '', color_code: '#C8102E', sort_order: '' })
+    setTeamForm({ name: '', short_name: '', color_code: '#C8102E', sort_order: '', category: 'main' })
     loadTeams()
   }
 
@@ -575,6 +576,15 @@ export default function AdminPage() {
                       onChange={e => setTeamForm({...teamForm, color_code: e.target.value})} />
                   </div>
                 </div>
+                <div>
+                  <label className={labelClass}>カテゴリ</label>
+                  <select className={inputClass} value={teamForm.category}
+                    onChange={e => setTeamForm({...teamForm, category: e.target.value})}>
+                    <option value="main">本選出場校</option>
+                    <option value="qualifier">予選会出場校</option>
+                    <option value="other">その他</option>
+                  </select>
+                </div>
               </div>
               <button className={btnClass} onClick={addTeam} disabled={loading}>
                 {loading ? '追加中...' : '学校を追加する'}
@@ -589,6 +599,13 @@ export default function AdminPage() {
                     <span className="text-xs text-gray-500 w-6">{t.sort_order}</span>
                     <span className="w-3 h-3 rounded-full" style={{ background: t.color_code }} />
                     <span className="flex-1">{t.name}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      t.category === 'qualifier' ? 'bg-yellow-900 text-yellow-400' :
+                      t.category === 'other' ? 'bg-gray-800 text-gray-500' :
+                      'bg-red-900 text-red-400'
+                    }`}>
+                      {t.category === 'qualifier' ? '予選会' : t.category === 'other' ? 'その他' : '本選'}
+                    </span>
                     <span className="text-xs text-gray-500">{t.short_name}</span>
                     <button
                       onClick={() => deleteTeam(t.id, t.name)}

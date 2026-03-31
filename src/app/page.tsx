@@ -100,14 +100,48 @@ export default async function Home() {
           <h2 className="text-xs font-medium text-gray-400 tracking-widest mb-4 pb-2 border-b border-gray-800">
             出場校一覧
           </h2>
-          <div className="flex flex-col gap-0">
-            {teams?.map((team: any) => (
-              <div key={team.id} className="flex items-center gap-2 py-2 border-b border-gray-900 hover:bg-gray-900 px-1">
-                <span className="w-1 h-5 rounded-full" style={{ background: team.color_code }} />
-                <span className="text-sm font-medium">{team.name}</span>
+          {(() => {
+            const mainTeams = teams?.filter((t: any) => t.category === 'main' || !t.category) ?? []
+            const qualifierTeams = teams?.filter((t: any) => t.category === 'qualifier') ?? []
+            const otherTeams = teams?.filter((t: any) => t.category === 'other') ?? []
+            return (
+              <div className="flex flex-col gap-0">
+                {mainTeams.length > 0 && (
+                  <>
+                    <div className="text-[10px] text-red-500 font-medium tracking-widest py-1.5 px-1">本選出場校</div>
+                    {mainTeams.map((team: any) => (
+                      <div key={team.id} className="flex items-center gap-2 py-2 border-b border-gray-900 hover:bg-gray-900 px-1">
+                        <span className="w-1 h-5 rounded-full" style={{ background: team.color_code }} />
+                        <span className="text-sm font-medium">{team.name}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {qualifierTeams.length > 0 && (
+                  <>
+                    <div className="border-t border-gray-700 mt-3 pt-3 text-[10px] text-yellow-500 font-medium tracking-widest py-1.5 px-1">予選会出場校</div>
+                    {qualifierTeams.map((team: any) => (
+                      <div key={team.id} className="flex items-center gap-2 py-2 border-b border-gray-900 hover:bg-gray-900 px-1">
+                        <span className="w-1 h-5 rounded-full" style={{ background: team.color_code }} />
+                        <span className="text-sm font-medium">{team.name}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {otherTeams.length > 0 && (
+                  <>
+                    <div className="border-t border-gray-700 mt-3 pt-3 text-[10px] text-gray-500 font-medium tracking-widest py-1.5 px-1">その他</div>
+                    {otherTeams.map((team: any) => (
+                      <div key={team.id} className="flex items-center gap-2 py-2 border-b border-gray-900 hover:bg-gray-900 px-1">
+                        <span className="w-1 h-5 rounded-full" style={{ background: team.color_code }} />
+                        <span className="text-sm font-medium text-gray-400">{team.name}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
-            ))}
-          </div>
+            )
+          })()}
         </div>
       </section>
     </main>

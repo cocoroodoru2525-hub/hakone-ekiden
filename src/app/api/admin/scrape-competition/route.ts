@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import { scrapeCompetitionResults } from '@/lib/scrapers/competition-scraper'
 import { insertRecordWithPB } from '@/lib/pb-detector'
 import { findOrCreateAthlete } from '@/lib/find-or-create-athlete'
+import { findOrCreateTeam } from '@/lib/find-or-create-team'
 
 export async function POST(request: NextRequest) {
   const adminKey = request.headers.get('x-admin-key')
@@ -40,22 +41,23 @@ export async function POST(request: NextRequest) {
     let skipped = 0
     let pbUpdated = 0
     let athletesCreated = 0
+    let teamsCreated = 0
     const errors: string[] = []
+    const originalTeamIds = new Set(teams.map(t => t.id))
 
     for (const res of results) {
-      // チームマッチング
+      // チームマッチング（見つからなければ自動作成）
       const team = res.team_name
-        ? teams.find(t =>
-            res.team_name.includes(t.short_name || t.name) ||
-            (t.short_name || t.name).includes(res.team_name) ||
-            res.team_name.includes(t.name) ||
-            t.name.includes(res.team_name)
-          )
+        ? await findOrCreateTeam(supabaseAdmin, teams, res.team_name)
         : null
 
       if (!team) {
         skipped++
         continue
+      }
+      if (!originalTeamIds.has(team.id)) {
+        originalTeamIds.add(team.id)
+        teamsCreated++
       }
 
       // 選手を検索（autoCreate時は自動作成）
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest) {
       inserted_count: inserted,
       updated_count: pbUpdated,
       error_message: errors.length > 0 ? errors.slice(0, 10).join('\n') : null,
-      raw_log: { totalScraped: results.length, skipped, athletesCreated, competitionName, eventType },
+      raw_log: { totalScraped: results.length, skipped, athletesCreated, teamsCreated, competitionName, eventType },
     })
 
     return Response.json({
@@ -107,6 +109,7 @@ export async function POST(request: NextRequest) {
       pbUpdated,
       skipped,
       athletesCreated,
+      teamsCreated,
       errors: errors.slice(0, 20),
     })
   } catch (e: any) {
