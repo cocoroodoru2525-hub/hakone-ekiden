@@ -4,6 +4,7 @@ import { scrapeCompetitionResults } from '@/lib/scrapers/competition-scraper'
 import { insertRecordWithPB } from '@/lib/pb-detector'
 import { findOrCreateAthlete } from '@/lib/find-or-create-athlete'
 import { findOrCreateTeam } from '@/lib/find-or-create-team'
+import { generatePostFromResults } from '@/lib/post-generator'
 
 export async function POST(request: NextRequest) {
   const adminKey = request.headers.get('x-admin-key')
@@ -92,6 +93,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 記事を自動生成
+    const post = await generatePostFromResults(
+      supabaseAdmin,
+      competitionName,
+      eventType,
+      competedAt,
+      results.map((r, i) => ({
+        rank: r.rank ?? (i + 1),
+        athlete_name: r.athlete_name,
+        team_name: r.team_name,
+        time_display: r.time_display,
+      })),
+      { inserted, pbUpdated }
+    )
+
     await supabaseAdmin.from('hk_scrape_logs').insert({
       scrape_type: 'competition',
       source_url: url,
@@ -110,6 +126,7 @@ export async function POST(request: NextRequest) {
       skipped,
       athletesCreated,
       teamsCreated,
+      postSlug: post?.slug ?? null,
       errors: errors.slice(0, 20),
     })
   } catch (e: any) {

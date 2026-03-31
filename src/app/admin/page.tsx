@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
-type Tab = 'athlete' | 'record' | 'csv' | 'roster' | 'auto' | 'team'
+type Tab = 'athlete' | 'record' | 'csv' | 'roster' | 'auto' | 'team' | 'post'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('athlete')
@@ -182,6 +182,59 @@ export default function AdminPage() {
       setMsg('エラー: ' + e.message)
     }
     setLoading(false)
+  }
+
+  // --- 記事管理 ---
+  const [posts, setPosts] = useState<any[]>([])
+  const [postForm, setPostForm] = useState({ title: '', body: '', category: 'news' })
+  const [editingPost, setEditingPost] = useState<any>(null)
+
+  useEffect(() => {
+    if (tab === 'post') loadPosts()
+  }, [tab])
+
+  async function loadPosts() {
+    const { data } = await supabase
+      .from('hk_posts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30)
+    if (data) setPosts(data)
+  }
+
+  async function savePost() {
+    if (!postForm.title || !postForm.body) { setMsg('タイトルと本文は必須です'); return }
+    setLoading(true)
+    const slug = `${new Date().toISOString().split('T')[0]}-${postForm.title}`
+      .replace(/[^a-zA-Z0-9\u3000-\u9FFF-]/g, '-').replace(/-+/g, '-').toLowerCase()
+
+    if (editingPost) {
+      const { error } = await supabase.from('hk_posts')
+        .update({ title: postForm.title, body: postForm.body, category: postForm.category, updated_at: new Date().toISOString() })
+        .eq('id', editingPost.id)
+      if (error) { setMsg('エラー: ' + error.message) } else { setMsg('記事を更新しました') }
+    } else {
+      const { error } = await supabase.from('hk_posts').insert({
+        title: postForm.title, slug, body: postForm.body, category: postForm.category
+      })
+      if (error) { setMsg('エラー: ' + error.message) } else { setMsg('記事を公開しました') }
+    }
+    setLoading(false)
+    setPostForm({ title: '', body: '', category: 'news' })
+    setEditingPost(null)
+    loadPosts()
+  }
+
+  async function deletePost(id: number) {
+    if (!confirm('この記事を削除しますか？')) return
+    await supabase.from('hk_posts').delete().eq('id', id)
+    setMsg('記事を削除しました')
+    loadPosts()
+  }
+
+  function editPost(post: any) {
+    setEditingPost(post)
+    setPostForm({ title: post.title, body: post.body, category: post.category })
   }
 
   // --- 学校追加 ---
@@ -417,6 +470,7 @@ export default function AdminPage() {
             { key: 'team' as Tab, label: '学校管理' },
             { key: 'roster' as Tab, label: '名簿取込' },
             { key: 'auto' as Tab, label: '記録自動取得' },
+            { key: 'post' as Tab, label: '記事管理' },
           ].map(t => (
             <button
               key={t.key}
@@ -567,6 +621,76 @@ export default function AdminPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 記事管理 */}
+        {tab === 'post' && (
+          <div className="space-y-6">
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex flex-col gap-4">
+              <h2 className="text-sm font-medium">{editingPost ? '記事を編集' : '新しい記事を作成'}</h2>
+              <p className="text-xs text-gray-500">大会結果を取り込むと自動で記事が生成されます。手動でも作成できます。</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className={labelClass}>タイトル *</label>
+                  <input className={inputClass} placeholder="例: 日体大記録会 10000m 結果速報" value={postForm.title}
+                    onChange={e => setPostForm({...postForm, title: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelClass}>カテゴリ</label>
+                  <select className={inputClass} value={postForm.category}
+                    onChange={e => setPostForm({...postForm, category: e.target.value})}>
+                    <option value="result">大会結果</option>
+                    <option value="news">ニュース</option>
+                    <option value="column">コラム</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>本文 *（マークダウン対応: ## 見出し、| テーブル |）</label>
+                <textarea
+                  className={inputClass + ' h-48 font-mono'}
+                  placeholder="記事の本文..."
+                  value={postForm.body}
+                  onChange={e => setPostForm({...postForm, body: e.target.value})}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button className={btnClass} onClick={savePost} disabled={loading}>
+                  {loading ? '保存中...' : editingPost ? '記事を更新する' : '記事を公開する'}
+                </button>
+                {editingPost && (
+                  <button className={btnSecondary} onClick={() => { setEditingPost(null); setPostForm({ title: '', body: '', category: 'news' }) }}>
+                    キャンセル
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h2 className="text-sm font-medium mb-4">公開済み記事（{posts.length}件）</h2>
+              {posts.length === 0 ? (
+                <p className="text-xs text-gray-500">まだ記事がありません</p>
+              ) : (
+                <div className="space-y-2">
+                  {posts.map(post => (
+                    <div key={post.id} className="flex items-center gap-3 py-2 border-b border-gray-800 text-sm">
+                      <span className={`text-xs px-2 py-0.5 rounded ${
+                        post.category === 'result' ? 'bg-red-900 text-red-400' :
+                        post.category === 'news' ? 'bg-blue-900 text-blue-400' :
+                        'bg-gray-800 text-gray-400'
+                      }`}>
+                        {post.category === 'result' ? '結果' : post.category === 'news' ? 'ニュース' : 'コラム'}
+                      </span>
+                      <span className="flex-1">{post.title}</span>
+                      <span className="text-xs text-gray-600">{new Date(post.created_at).toLocaleDateString('ja-JP')}</span>
+                      <button onClick={() => editPost(post)} className="text-xs text-gray-400 hover:text-white">編集</button>
+                      <button onClick={() => deletePost(post.id)} className="text-xs text-gray-600 hover:text-red-400">削除</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

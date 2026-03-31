@@ -66,6 +66,7 @@ export default function RootLayout({
                   <a href="/teams" className="text-xs text-gray-400 hover:text-white">出場校</a>
                   <a href="/athletes" className="text-xs text-gray-400 hover:text-white">選手一覧</a>
                   <a href="/results" className="text-xs text-gray-400 hover:text-white">リザルト</a>
+                  <a href="/news" className="text-xs text-gray-400 hover:text-white">ニュース</a>
                 </div>
                 <div className="flex flex-col gap-2">
                   <span className="text-xs text-gray-500 font-medium">サイト情報</span>
