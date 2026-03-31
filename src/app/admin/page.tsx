@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
-type Tab = 'athlete' | 'record' | 'csv' | 'roster' | 'auto'
+type Tab = 'athlete' | 'record' | 'csv' | 'roster' | 'auto' | 'team'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('athlete')
@@ -154,6 +154,76 @@ export default function AdminPage() {
     setMsg(`登録完了: ${ok}件成功 / ${ng}件失敗`)
     setPreview([])
     setCsvText('')
+  }
+
+  // --- 学校追加 ---
+  const [teamForm, setTeamForm] = useState({
+    name: '', short_name: '', color_code: '#C8102E', sort_order: ''
+  })
+  const [teamList, setTeamList] = useState<any[]>([])
+
+  useEffect(() => {
+    if (tab === 'team') loadTeams()
+  }, [tab])
+
+  async function loadTeams() {
+    const { data } = await supabase
+      .from('hk_teams')
+      .select('id, name, short_name, color_code, sort_order')
+      .order('sort_order')
+    if (data) setTeamList(data)
+  }
+
+  async function addTeam() {
+    if (!teamForm.name) {
+      setMsg('大学名は必須です')
+      return
+    }
+    setLoading(true)
+
+    // short_nameを自動生成（「大学」を除去）
+    const shortName = teamForm.short_name || teamForm.name
+      .replace(/大学$/, '')
+      .replace(/大学校$/, '')
+
+    // sort_orderが未指定なら最後に追加
+    const sortOrder = teamForm.sort_order
+      ? Number(teamForm.sort_order)
+      : (teamList.length > 0 ? Math.max(...teamList.map(t => t.sort_order)) + 1 : 1)
+
+    const { error } = await supabase.from('hk_teams').insert({
+      name: teamForm.name,
+      short_name: shortName,
+      color_code: teamForm.color_code,
+      sort_order: sortOrder,
+    })
+    setLoading(false)
+    if (error) {
+      setMsg('エラー: ' + error.message)
+      return
+    }
+    setMsg(`学校を追加しました: ${teamForm.name}（順位: ${sortOrder}）`)
+    setTeamForm({ name: '', short_name: '', color_code: '#C8102E', sort_order: '' })
+    loadTeams()
+  }
+
+  async function deleteTeam(id: number, name: string) {
+    if (!confirm(`「${name}」を削除しますか？関連する選手・記録も削除されます。`)) return
+    setLoading(true)
+    // 関連する記録を削除
+    const { data: athletes } = await supabase
+      .from('hk_athletes').select('id').eq('team_id', id)
+    if (athletes) {
+      for (const a of athletes) {
+        await supabase.from('hk_records').delete().eq('athlete_id', a.id)
+      }
+    }
+    await supabase.from('hk_athletes').delete().eq('team_id', id)
+    await supabase.from('hk_ekiden_results').delete().eq('team_id', id)
+    await supabase.from('hk_teams').delete().eq('id', id)
+    setLoading(false)
+    setMsg(`「${name}」を削除しました`)
+    loadTeams()
   }
 
   // --- 名簿取込 ---
@@ -315,6 +385,7 @@ export default function AdminPage() {
             { key: 'athlete' as Tab, label: '選手登録' },
             { key: 'record' as Tab, label: '記録登録' },
             { key: 'csv' as Tab, label: 'CSV取込' },
+            { key: 'team' as Tab, label: '学校管理' },
             { key: 'roster' as Tab, label: '名簿取込' },
             { key: 'auto' as Tab, label: '記録自動取得' },
           ].map(t => (
@@ -467,6 +538,67 @@ export default function AdminPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 学校管理 */}
+        {tab === 'team' && (
+          <div className="space-y-6">
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex flex-col gap-4">
+              <h2 className="text-sm font-medium">新しい学校を追加</h2>
+              <p className="text-xs text-gray-500">
+                予選会通過校など、新しい出場校を追加します。追加後「名簿取込」で選手を一括登録できます。
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>大学名 *</label>
+                  <input className={inputClass} placeholder="例: 法政大学" value={teamForm.name}
+                    onChange={e => setTeamForm({...teamForm, name: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelClass}>略称（空欄で自動生成）</label>
+                  <input className={inputClass} placeholder="例: 法政" value={teamForm.short_name}
+                    onChange={e => setTeamForm({...teamForm, short_name: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelClass}>表示順位</label>
+                  <input className={inputClass} type="number" placeholder="空欄で末尾に追加" value={teamForm.sort_order}
+                    onChange={e => setTeamForm({...teamForm, sort_order: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelClass}>カラーコード</label>
+                  <div className="flex gap-2">
+                    <input type="color" value={teamForm.color_code}
+                      onChange={e => setTeamForm({...teamForm, color_code: e.target.value})}
+                      className="w-10 h-10 rounded border border-gray-700 bg-transparent cursor-pointer" />
+                    <input className={inputClass} value={teamForm.color_code}
+                      onChange={e => setTeamForm({...teamForm, color_code: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+              <button className={btnClass} onClick={addTeam} disabled={loading}>
+                {loading ? '追加中...' : '学校を追加する'}
+              </button>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h2 className="text-sm font-medium mb-4">登録済み学校一覧（{teamList.length}校）</h2>
+              <div className="space-y-1">
+                {teamList.map((t, i) => (
+                  <div key={t.id} className="flex items-center gap-3 py-2 border-b border-gray-800 text-sm">
+                    <span className="text-xs text-gray-500 w-6">{t.sort_order}</span>
+                    <span className="w-3 h-3 rounded-full" style={{ background: t.color_code }} />
+                    <span className="flex-1">{t.name}</span>
+                    <span className="text-xs text-gray-500">{t.short_name}</span>
+                    <button
+                      onClick={() => deleteTeam(t.id, t.name)}
+                      className="text-xs text-gray-600 hover:text-red-400"
+                      disabled={loading}
+                    >削除</button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
