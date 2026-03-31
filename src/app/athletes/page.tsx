@@ -47,6 +47,7 @@ export default function AthletesPage() {
       const { data } = await supabase
         .from('hk_athletes')
         .select('*, hk_teams(name, short_name, color_code, sort_order)')
+        .neq('is_active', false)
         .order('team_id')
       setAthletes(data ?? [])
       setLoading(false)

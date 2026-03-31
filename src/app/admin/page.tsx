@@ -156,6 +156,34 @@ export default function AdminPage() {
     setCsvText('')
   }
 
+  // --- 年度更新 ---
+  const [yearResult, setYearResult] = useState<any>(null)
+
+  async function runYearUpdate() {
+    if (!confirm('年度更新を実行しますか？\n\n・4年生を卒業（非表示）にします\n・全選手の学年を1つ繰り上げます\n\nこの操作は取り消せません。')) return
+    setLoading(true)
+    setMsg('年度更新中...')
+    try {
+      const res = await fetch('/api/admin/year-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'hakone-admin-2026',
+        },
+      })
+      const data = await res.json()
+      if (data.error) {
+        setMsg('エラー: ' + data.error)
+      } else {
+        setYearResult(data)
+        setMsg(`年度更新完了: ${data.graduated}名卒業 / 3→4年:${data.promotedFrom3}名 / 2→3年:${data.promotedFrom2}名 / 1→2年:${data.promotedFrom1}名`)
+      }
+    } catch (e: any) {
+      setMsg('エラー: ' + e.message)
+    }
+    setLoading(false)
+  }
+
   // --- 学校追加 ---
   const [teamForm, setTeamForm] = useState({
     name: '', short_name: '', color_code: '#C8102E', sort_order: '', category: 'main'
@@ -654,6 +682,32 @@ export default function AdminPage() {
               >
                 {loading ? '更新中...' : '箱根駅伝順位で並び替える'}
               </button>
+            </div>
+
+            <div className="border-t border-gray-800 pt-4 mt-2">
+              <h2 className="text-sm font-medium mb-2">年度更新（毎年4月に実行）</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                4年生を卒業（非表示）にし、全選手の学年を1つ繰り上げます。
+                実行後「名簿取込」で新1年生を追加できます。
+              </p>
+              <button
+                className="border border-yellow-600 text-yellow-400 hover:bg-yellow-900 px-4 py-2 rounded text-sm"
+                onClick={runYearUpdate}
+                disabled={loading}
+              >
+                {loading ? '更新中...' : '年度更新を実行する'}
+              </button>
+
+              {yearResult && (
+                <div className="mt-3 text-xs space-y-1">
+                  <div className="text-gray-400">卒業: <span className="text-white">{yearResult.graduated}名</span></div>
+                  {yearResult.graduatedNames.length > 0 && (
+                    <div className="text-gray-500 bg-gray-800 rounded p-2 max-h-24 overflow-y-auto">
+                      {yearResult.graduatedNames.join('、')}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {rosterResult && (
