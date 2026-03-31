@@ -183,6 +183,30 @@ export default function AdminPage() {
     setLoading(false)
   }
 
+  // --- 順位並び替え ---
+  async function updateSortOrder() {
+    setLoading(true)
+    setMsg('順位を更新中...')
+    try {
+      const res = await fetch('/api/admin/update-sort-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'hakone-admin-2026',
+        },
+      })
+      const data = await res.json()
+      if (data.error) {
+        setMsg('エラー: ' + data.error)
+      } else {
+        setMsg(`並び替え完了: ${data.raceYear}年の結果に基づき${data.updated}校を更新しました`)
+      }
+    } catch (e: any) {
+      setMsg('エラー: ' + e.message)
+    }
+    setLoading(false)
+  }
+
   // --- 記録自動取得 ---
   const [autoResult, setAutoResult] = useState<any>(null)
   const [compForm, setCompForm] = useState({
@@ -465,6 +489,20 @@ export default function AdminPage() {
             <p className="text-xs text-gray-500">
               ※ 全3種目(5000m, 10000m, ハーフ)のランキングを巡回するため、数十秒かかります。
             </p>
+
+            <div className="border-t border-gray-800 pt-4 mt-2">
+              <h2 className="text-sm font-medium mb-2">出場校の並び順を更新</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                最新の箱根駅伝総合順位に基づいて、出場校の表示順を自動で並び替えます。
+              </p>
+              <button
+                className={btnSecondary}
+                onClick={updateSortOrder}
+                disabled={loading}
+              >
+                {loading ? '更新中...' : '箱根駅伝順位で並び替える'}
+              </button>
+            </div>
 
             {rosterResult && (
               <div className="border border-gray-700 rounded p-4 text-sm space-y-2">
