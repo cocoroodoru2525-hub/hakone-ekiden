@@ -75,14 +75,14 @@ export default async function Home() {
                   <tr key={r.id} className="border-b border-gray-900 hover:bg-gray-900">
                     <td className="py-2 text-gray-500 text-xs">{i + 1}</td>
                     <td className="py-2">
-                      <div className="flex items-center gap-2">
+                      <a href={`/athletes/${r.athlete_id}`} className="flex items-center gap-2 hover:opacity-80">
                         <span
                           className="w-2 h-2 rounded-full"
                           style={{ background: r.hk_athletes?.hk_teams?.color_code ?? '#888' }}
                         />
-                        <span className="font-medium">{r.hk_athletes?.name}</span>
+                        <span className="font-medium hover:underline">{r.hk_athletes?.name}</span>
                         <span className="text-xs text-gray-500">{r.hk_athletes?.hk_teams?.short_name}</span>
-                      </div>
+                      </a>
                     </td>
                     <td className="py-2 text-right font-medium tabular-nums text-red-400">{r.time_display}</td>
                     <td className="py-2 pl-4 text-xs text-gray-500">{r.competition_name}</td>
