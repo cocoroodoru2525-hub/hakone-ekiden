@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "箱根駅伝DATA | 選手記録・PBランキング・応援サイト",
-  description: "箱根駅伝出場校の選手記録をリアルタイムで追跡。5000m・10000m・ハーフマラソンのPBランキング、大会結果、選手応援メッセージ機能を搭載した非公式ファンサイト。",
+  title: "家族で楽しむ！箱根駅伝DATA | 選手記録・PBランキング・応援サイト",
+  description: "家族で箱根駅伝をもっと楽しもう！出場校の選手記録をリアルタイムで追跡。5000m・10000m・ハーフマラソンのPBランキング、大会結果、選手応援メッセージ機能を搭載。",
   keywords: "箱根駅伝, 駅伝, 大学駅伝, 選手記録, PB, ランキング, 応援, 陸上競技, 長距離",
   openGraph: {
-    title: "箱根駅伝DATA",
-    description: "箱根駅伝出場校の選手記録をリアルタイムで追跡するファンサイト",
+    title: "家族で楽しむ！箱根駅伝DATA",
+    description: "家族で箱根駅伝をもっと楽しもう！選手記録をリアルタイムで追跡するファンサイト",
     url: "https://hakone-fan.com",
     siteName: "箱根駅伝DATA",
     locale: "ja_JP",
@@ -48,7 +48,7 @@ export default function RootLayout({
               <div>
                 <div className="text-sm font-medium text-white mb-2">箱根駅伝DATA</div>
                 <p className="text-xs text-gray-500 max-w-sm">
-                  箱根駅伝をはじめとする大学長距離競技の非公式ファンサイトです。選手の年間記録をリアルタイムで追跡しています。
+                  家族みんなで箱根駅伝をもっと楽しもう！選手の年間記録をリアルタイムで追跡する非公式ファンサイトです。
                 </p>
               </div>
               <div className="flex gap-8">
