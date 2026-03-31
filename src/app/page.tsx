@@ -4,7 +4,7 @@ export default async function Home() {
   const { data: teams } = await supabase
     .from('hk_teams')
     .select('*')
-    .order('name')
+    .order('sort_order')
 
   const { data: records } = await supabase
     .from('hk_records')
