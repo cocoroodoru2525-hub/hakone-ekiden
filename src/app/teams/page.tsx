@@ -11,9 +11,9 @@ export default async function TeamsPage() {
   const qualifierTeams = teams?.filter((t: any) => t.category === 'qualifier') ?? []
   const otherTeams = teams?.filter((t: any) => t.category === 'other') ?? []
 
-  // シード校（前回大会上位10校）と予選会通過校を分ける
+  // シード校（前回大会上位10校）と予選会通過校（11-20位）
   const seedTeams = mainTeams.filter((_: any, i: number) => i < 10)
-  const qualifiedTeams = mainTeams.filter((_: any, i: number) => i >= 10)
+  const qualifiedFromRace = mainTeams.filter((_: any, i: number) => i >= 10)
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
@@ -38,11 +38,11 @@ export default async function TeamsPage() {
         </div>
 
         <div className="space-y-8">
-          {/* シード校 */}
+          {/* 第103回シード校 */}
           {seedTeams.length > 0 && (
             <div>
               <h2 className="text-xs font-medium text-red-500 tracking-widest mb-3 pb-2 border-b border-gray-800">
-                シード校（前回大会上位10校）
+                第103回 シード校（第102回上位10校）
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {seedTeams.map((team: any) => (
@@ -51,7 +51,7 @@ export default async function TeamsPage() {
                       <span className="w-3 h-10 rounded-full flex-shrink-0" style={{ background: team.color_code }} />
                       <div>
                         <div className="font-medium text-sm">{team.name}</div>
-                        <div className="text-xs text-gray-500 mt-1">第{102}回 総合{team.sort_order}位</div>
+                        <div className="text-xs text-gray-500 mt-1">第102回 総合{team.sort_order}位</div>
                       </div>
                     </div>
                   </Link>
@@ -60,20 +60,28 @@ export default async function TeamsPage() {
             </div>
           )}
 
-          {/* 予選会通過校 */}
-          {qualifiedTeams.length > 0 && (
+          {/* 第103回予選会通過校 */}
+          <div>
+            <h2 className="text-xs font-medium text-yellow-500 tracking-widest mb-3 pb-2 border-b border-gray-800">
+              第103回 予選会通過校
+            </h2>
+            <p className="text-sm text-gray-500">2026年10月の予選会結果発表後に更新されます</p>
+          </div>
+
+          {/* 第102回予選会通過校（前回本選出場） */}
+          {qualifiedFromRace.length > 0 && (
             <div>
-              <h2 className="text-xs font-medium text-yellow-500 tracking-widest mb-3 pb-2 border-b border-gray-800">
-                予選会通過校（{qualifiedTeams.length}校）
+              <h2 className="text-xs font-medium text-gray-400 tracking-widest mb-3 pb-2 border-b border-gray-800">
+                第102回 予選会通過校（前回本選出場）
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {qualifiedTeams.map((team: any) => (
+                {qualifiedFromRace.map((team: any) => (
                   <Link key={team.id} href={`/teams/${team.id}`}>
                     <div className="bg-gray-900 border border-gray-800 rounded-lg px-5 py-4 flex items-center gap-3 hover:border-gray-600 cursor-pointer transition">
                       <span className="w-3 h-10 rounded-full flex-shrink-0" style={{ background: team.color_code }} />
                       <div>
                         <div className="font-medium text-sm">{team.name}</div>
-                        <div className="text-xs text-gray-500 mt-1">第{102}回 総合{team.sort_order}位</div>
+                        <div className="text-xs text-gray-500 mt-1">第102回 総合{team.sort_order}位</div>
                       </div>
                     </div>
                   </Link>
@@ -82,11 +90,11 @@ export default async function TeamsPage() {
             </div>
           )}
 
-          {/* 予選会出場校（次回に向けて） */}
+          {/* 前回予選会出場校 */}
           {qualifierTeams.length > 0 && (
             <div>
-              <h2 className="text-xs font-medium text-gray-400 tracking-widest mb-3 pb-2 border-b border-gray-800">
-                予選会出場校（{qualifierTeams.length}校）
+              <h2 className="text-xs font-medium text-gray-500 tracking-widest mb-3 pb-2 border-b border-gray-800">
+                前回予選会出場校（{qualifierTeams.length}校）
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {qualifierTeams.map((team: any) => (
@@ -104,7 +112,7 @@ export default async function TeamsPage() {
             </div>
           )}
 
-          {/* その他 */}
+          {/* その他の関東大学 */}
           {otherTeams.length > 0 && (
             <div>
               <h2 className="text-xs font-medium text-gray-500 tracking-widest mb-3 pb-2 border-b border-gray-800">
