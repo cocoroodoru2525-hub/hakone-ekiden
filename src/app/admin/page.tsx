@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
+type Tab = 'athlete' | 'record' | 'csv' | 'roster' | 'auto'
+
 export default function AdminPage() {
-  const [tab, setTab] = useState<'athlete' | 'record' | 'csv'>('athlete')
+  const [tab, setTab] = useState<Tab>('athlete')
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -15,7 +17,7 @@ export default function AdminPage() {
 
   async function saveAthlete() {
     if (!athleteForm.team_id || !athleteForm.name) {
-      setMsg('❌ 大学IDと選手名は必須です')
+      setMsg('大学IDと選手名は必須です')
       return
     }
     setLoading(true)
@@ -29,8 +31,8 @@ export default function AdminPage() {
       prefecture: athleteForm.prefecture,
     })
     setLoading(false)
-    if (error) { setMsg('❌ エラー: ' + error.message); return }
-    setMsg('✅ 選手を登録しました: ' + athleteForm.name)
+    if (error) { setMsg('エラー: ' + error.message); return }
+    setMsg('選手を登録しました: ' + athleteForm.name)
     setAthlete({ team_id: athleteForm.team_id, name: '', name_kana: '', grade: '', bib_number: '', school: '', prefecture: '' })
   }
 
@@ -49,13 +51,12 @@ export default function AdminPage() {
 
   async function saveRecord() {
     if (!recForm.athlete_id || !recForm.time_display) {
-      setMsg('❌ 選手IDと記録は必須です')
+      setMsg('選手IDと記録は必須です')
       return
     }
     setLoading(true)
     const secs = timeToSeconds(recForm.time_display)
 
-    // 既存PBを確認
     const { data: existing } = await supabase
       .from('hk_records')
       .select('id, time_seconds')
@@ -66,7 +67,6 @@ export default function AdminPage() {
 
     const isPB = !existing || secs < existing.time_seconds
 
-    // 既存PBをリセット
     if (isPB && existing) {
       await supabase.from('hk_records').update({ is_pb: false }).eq('id', existing.id)
     }
@@ -82,8 +82,8 @@ export default function AdminPage() {
       year: new Date().getFullYear(),
     })
     setLoading(false)
-    if (error) { setMsg('❌ エラー: ' + error.message); return }
-    setMsg(`✅ 記録を登録しました ${isPB ? '（PB更新！）' : ''}`)
+    if (error) { setMsg('エラー: ' + error.message); return }
+    setMsg(`記録を登録しました ${isPB ? '(PB更新!)' : ''}`)
     setRec({ ...recForm, time_display: '', competition_name: '', competed_at: '' })
   }
 
@@ -105,19 +105,17 @@ export default function AdminPage() {
       }
     })
     setPreview(rows)
-    setMsg(`📋 ${rows.length}件をプレビュー中。確認して「登録」を押してください。`)
+    setMsg(`${rows.length}件をプレビュー中。確認して「登録」を押してください。`)
   }
 
   async function importCSV() {
     setLoading(true)
     let ok = 0, ng = 0
     for (const row of preview) {
-      // チーム検索
       const { data: team } = await supabase
         .from('hk_teams').select('id').ilike('name', `%${row.team_name}%`).single()
       if (!team) { ng++; continue }
 
-      // 選手検索（なければ作成）
       let { data: athlete } = await supabase
         .from('hk_athletes').select('id').eq('name', row.name).eq('team_id', team.id).single()
 
@@ -131,7 +129,6 @@ export default function AdminPage() {
       const secs = timeToSeconds(row.time_display)
       if (!secs) { ng++; continue }
 
-      // PB判定
       const { data: existing } = await supabase
         .from('hk_records').select('id, time_seconds')
         .eq('athlete_id', athlete.id).eq('event_type', row.event_type).eq('is_pb', true).single()
@@ -154,14 +151,123 @@ export default function AdminPage() {
       if (error) { ng++ } else { ok++ }
     }
     setLoading(false)
-    setMsg(`✅ 登録完了：${ok}件成功 / ${ng}件失敗`)
+    setMsg(`登録完了: ${ok}件成功 / ${ng}件失敗`)
     setPreview([])
     setCsvText('')
+  }
+
+  // --- 名簿取込 ---
+  const [rosterResult, setRosterResult] = useState<any>(null)
+
+  async function scrapeRoster() {
+    setLoading(true)
+    setMsg('名簿をスクレイピング中... (数十秒かかります)')
+    try {
+      const res = await fetch('/api/admin/scrape-roster', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'hakone-admin-2026',
+        },
+      })
+      const data = await res.json()
+      if (data.error) {
+        setMsg('エラー: ' + data.error)
+      } else {
+        setRosterResult(data)
+        setMsg(`名簿取込完了: ${data.inserted}名新規登録 / ${data.updated}名更新 / ${data.recordsInserted}件の記録登録`)
+      }
+    } catch (e: any) {
+      setMsg('エラー: ' + e.message)
+    }
+    setLoading(false)
+  }
+
+  // --- 記録自動取得 ---
+  const [autoResult, setAutoResult] = useState<any>(null)
+  const [compForm, setCompForm] = useState({
+    url: '', eventType: 'half', competitionName: '', competedAt: ''
+  })
+  const [scrapeLogs, setScrapeLogs] = useState<any[]>([])
+
+  useEffect(() => {
+    if (tab === 'auto') {
+      loadScrapeLogs()
+    }
+  }, [tab])
+
+  async function loadScrapeLogs() {
+    const { data } = await supabase
+      .from('hk_scrape_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10)
+    if (data) setScrapeLogs(data)
+  }
+
+  async function scrapeRecordsNow() {
+    setLoading(true)
+    setMsg('記録をスクレイピング中... (数十秒かかります)')
+    try {
+      const res = await fetch('/api/admin/scrape-records', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'hakone-admin-2026',
+        },
+      })
+      const data = await res.json()
+      if (data.error) {
+        setMsg('エラー: ' + data.error)
+      } else {
+        setAutoResult(data)
+        setMsg(`記録取得完了: ${data.totalScraped}件取得 / ${data.inserted}件新規 / ${data.pbUpdated}件PB更新`)
+        loadScrapeLogs()
+      }
+    } catch (e: any) {
+      setMsg('エラー: ' + e.message)
+    }
+    setLoading(false)
+  }
+
+  async function scrapeCompetition() {
+    if (!compForm.url || !compForm.competitionName) {
+      setMsg('URLと大会名は必須です')
+      return
+    }
+    setLoading(true)
+    setMsg('大会結果を取込中...')
+    try {
+      const res = await fetch('/api/admin/scrape-competition', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'hakone-admin-2026',
+        },
+        body: JSON.stringify({
+          url: compForm.url,
+          eventType: compForm.eventType,
+          competitionName: compForm.competitionName,
+          competedAt: compForm.competedAt,
+        }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setMsg('エラー: ' + data.error)
+      } else {
+        setMsg(`大会結果取込完了: ${data.totalScraped}件取得 / ${data.inserted}件新規 / ${data.pbUpdated}件PB更新`)
+        loadScrapeLogs()
+      }
+    } catch (e: any) {
+      setMsg('エラー: ' + e.message)
+    }
+    setLoading(false)
   }
 
   const inputClass = "w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
   const labelClass = "block text-xs text-gray-400 mb-1"
   const btnClass = "bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
+  const btnSecondary = "border border-gray-600 text-gray-300 hover:text-white px-4 py-2 rounded text-sm"
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
@@ -170,22 +276,24 @@ export default function AdminPage() {
           <span className="text-lg font-medium tracking-wide">箱根駅伝DATA</span>
           <span className="ml-3 text-xs text-gray-500">管理画面</span>
         </div>
-        <a href="/" className="text-xs text-gray-400 hover:text-white">← サイトに戻る</a>
+        <a href="/" className="text-xs text-gray-400 hover:text-white">&larr; サイトに戻る</a>
       </header>
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="text-xl font-medium mb-6">データ管理</h1>
 
         {/* タブ */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           {[
-            { key: 'athlete', label: '選手登録' },
-            { key: 'record',  label: '記録登録' },
-            { key: 'csv',     label: 'CSV一括取込' },
+            { key: 'athlete' as Tab, label: '選手登録' },
+            { key: 'record' as Tab, label: '記録登録' },
+            { key: 'csv' as Tab, label: 'CSV取込' },
+            { key: 'roster' as Tab, label: '名簿取込' },
+            { key: 'auto' as Tab, label: '記録自動取得' },
           ].map(t => (
             <button
               key={t.key}
-              onClick={() => { setTab(t.key as any); setMsg('') }}
+              onClick={() => { setTab(t.key); setMsg('') }}
               className={`px-4 py-2 rounded text-sm font-medium border ${
                 tab === t.key
                   ? 'bg-red-600 border-red-600 text-white'
@@ -261,7 +369,7 @@ export default function AdminPage() {
                 </select>
               </div>
               <div>
-                <label className={labelClass}>記録 * （例: 1:01:47 または 27:54.31）</label>
+                <label className={labelClass}>記録 * (例: 1:01:47 または 27:54.31)</label>
                 <input className={inputClass} placeholder="1:01:47" value={recForm.time_display}
                   onChange={e => setRec({...recForm, time_display: e.target.value})} />
               </div>
@@ -287,7 +395,7 @@ export default function AdminPage() {
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex flex-col gap-4">
             <div>
               <p className="text-xs text-gray-400 mb-2">
-                形式：<code className="text-red-400">選手名, 大学名, 種目, 記録, 大会名, 日付</code>
+                形式: <code className="text-red-400">選手名, 大学名, 種目, 記録, 大会名, 日付</code>
               </p>
               <p className="text-xs text-gray-500 mb-3">
                 種目は half / 10000m / 5000m のいずれか。1行1件で入力してください。
@@ -300,8 +408,7 @@ export default function AdminPage() {
               />
             </div>
             <div className="flex gap-3">
-              <button className="border border-gray-600 text-gray-300 hover:text-white px-4 py-2 rounded text-sm"
-                onClick={parseCSV}>プレビュー確認</button>
+              <button className={btnSecondary} onClick={parseCSV}>プレビュー確認</button>
               {preview.length > 0 && (
                 <button className={btnClass} onClick={importCSV} disabled={loading}>
                   {loading ? '登録中...' : `${preview.length}件を一括登録する`}
@@ -333,6 +440,185 @@ export default function AdminPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 名簿取込 */}
+        {tab === 'roster' && (
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex flex-col gap-4">
+            <div>
+              <h2 className="text-sm font-medium mb-2">選手名簿一括取込</h2>
+              <p className="text-xs text-gray-500 mb-4">
+                ekidenreki.com の PBランキングから、3年生以下の選手を自動取得します。
+                取得した選手は hk_athletes に登録され、PB記録も同時に hk_records に登録されます。
+              </p>
+            </div>
+
+            <button
+              className={btnClass}
+              onClick={scrapeRoster}
+              disabled={loading}
+            >
+              {loading ? 'スクレイピング中...' : '全校の名簿を一括取込する'}
+            </button>
+
+            <p className="text-xs text-gray-500">
+              ※ 全3種目(5000m, 10000m, ハーフ)のランキングを巡回するため、数十秒かかります。
+            </p>
+
+            {rosterResult && (
+              <div className="border border-gray-700 rounded p-4 text-sm space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">取得選手数</div>
+                    <div className="text-xl font-mono text-white">{rosterResult.totalScraped}</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">新規登録</div>
+                    <div className="text-xl font-mono text-green-400">{rosterResult.inserted}</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">更新</div>
+                    <div className="text-xl font-mono text-blue-400">{rosterResult.updated}</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">記録登録</div>
+                    <div className="text-xl font-mono text-red-400">{rosterResult.recordsInserted}</div>
+                  </div>
+                </div>
+
+                {rosterResult.errors && rosterResult.errors.length > 0 && (
+                  <div className="mt-3">
+                    <div className="text-xs text-gray-400 mb-1">エラー ({rosterResult.errors.length}件):</div>
+                    <div className="bg-gray-800 rounded p-2 text-xs text-yellow-400 max-h-32 overflow-y-auto">
+                      {rosterResult.errors.map((e: string, i: number) => (
+                        <div key={i}>{e}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 記録自動取得 */}
+        {tab === 'auto' && (
+          <div className="space-y-6">
+            {/* PB一括更新 */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex flex-col gap-4">
+              <div>
+                <h2 className="text-sm font-medium mb-2">PB記録一括更新</h2>
+                <p className="text-xs text-gray-500 mb-2">
+                  ekidenreki.com から最新のPBランキングを取得し、登録済み選手の記録を更新します。
+                  毎日15:00 JST にVercel Cronで自動実行されますが、手動でも実行できます。
+                </p>
+              </div>
+
+              <button
+                className={btnClass}
+                onClick={scrapeRecordsNow}
+                disabled={loading}
+              >
+                {loading ? '取得中...' : '今すぐPB記録を更新する'}
+              </button>
+
+              {autoResult && (
+                <div className="grid grid-cols-4 gap-2 text-xs">
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">取得件数</div>
+                    <div className="text-lg font-mono">{autoResult.totalScraped}</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">新規登録</div>
+                    <div className="text-lg font-mono text-green-400">{autoResult.inserted}</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">PB更新</div>
+                    <div className="text-lg font-mono text-red-400">{autoResult.pbUpdated}</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3">
+                    <div className="text-gray-400">スキップ</div>
+                    <div className="text-lg font-mono text-gray-500">{autoResult.skipped}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 大会結果取込 */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex flex-col gap-4">
+              <div>
+                <h2 className="text-sm font-medium mb-2">大会結果取込</h2>
+                <p className="text-xs text-gray-500 mb-2">
+                  大会結果ページのURLを指定して、記録を取り込みます。HTML内のテーブルを自動検出します。
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className={labelClass}>結果ページURL *</label>
+                  <input className={inputClass} placeholder="https://www.kgrr.org/event/..." value={compForm.url}
+                    onChange={e => setCompForm({...compForm, url: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelClass}>種目 *</label>
+                  <select className={inputClass} value={compForm.eventType}
+                    onChange={e => setCompForm({...compForm, eventType: e.target.value})}>
+                    <option value="half">ハーフマラソン</option>
+                    <option value="10000m">10000m</option>
+                    <option value="5000m">5000m</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>大会名 *</label>
+                  <input className={inputClass} placeholder="例: 日体大記録会" value={compForm.competitionName}
+                    onChange={e => setCompForm({...compForm, competitionName: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelClass}>開催日</label>
+                  <input className={inputClass} type="date" value={compForm.competedAt}
+                    onChange={e => setCompForm({...compForm, competedAt: e.target.value})} />
+                </div>
+              </div>
+
+              <button
+                className={btnClass}
+                onClick={scrapeCompetition}
+                disabled={loading}
+              >
+                {loading ? '取込中...' : '大会結果を取込する'}
+              </button>
+            </div>
+
+            {/* スクレイピングログ */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h2 className="text-sm font-medium mb-4">実行ログ</h2>
+              {scrapeLogs.length === 0 ? (
+                <p className="text-xs text-gray-500">まだログがありません</p>
+              ) : (
+                <div className="space-y-2">
+                  {scrapeLogs.map((log, i) => (
+                    <div key={i} className="flex items-center gap-3 text-xs border-b border-gray-800 pb-2">
+                      <span className={`px-2 py-0.5 rounded text-xs ${
+                        log.status === 'success' ? 'bg-green-900 text-green-400' :
+                        log.status === 'partial' ? 'bg-yellow-900 text-yellow-400' :
+                        'bg-red-900 text-red-400'
+                      }`}>
+                        {log.status}
+                      </span>
+                      <span className="text-gray-400">{log.scrape_type}</span>
+                      <span className="text-gray-500">{log.source_url}</span>
+                      <span className="text-gray-500 ml-auto">
+                        +{log.inserted_count} / PB:{log.updated_count}
+                      </span>
+                      <span className="text-gray-600">
+                        {new Date(log.created_at).toLocaleString('ja-JP')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
