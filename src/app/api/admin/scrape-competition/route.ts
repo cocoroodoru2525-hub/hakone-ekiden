@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { scrapeCompetitionResults } from '@/lib/scrapers/competition-scraper'
 import { insertRecordWithPB } from '@/lib/pb-detector'
+import { findOrCreateAthlete } from '@/lib/find-or-create-athlete'
 
 export async function POST(request: NextRequest) {
   const adminKey = request.headers.get('x-admin-key')
@@ -11,11 +12,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { url, eventType, competitionName, competedAt } = body as {
+    const { url, eventType, competitionName, competedAt, autoCreate } = body as {
       url: string
       eventType: string
       competitionName: string
       competedAt: string
+      autoCreate?: boolean
     }
 
     if (!url || !eventType || !competitionName) {
@@ -37,6 +39,7 @@ export async function POST(request: NextRequest) {
     let inserted = 0
     let skipped = 0
     let pbUpdated = 0
+    let athletesCreated = 0
     const errors: string[] = []
 
     for (const res of results) {
@@ -50,22 +53,22 @@ export async function POST(request: NextRequest) {
           )
         : null
 
-      // 選手を検索（チームがわかれば絞り込み、わからなければ名前だけ）
-      let athleteQuery = supabaseAdmin
-        .from('hk_athletes')
-        .select('id')
-        .eq('name', res.athlete_name)
-
-      if (team) {
-        athleteQuery = athleteQuery.eq('team_id', team.id)
+      if (!team) {
+        skipped++
+        continue
       }
 
-      const { data: athlete } = await athleteQuery.maybeSingle()
+      // 選手を検索（autoCreate時は自動作成）
+      const athlete = await findOrCreateAthlete(
+        supabaseAdmin, res.athlete_name, team.id,
+        { autoCreate: autoCreate ?? false }
+      )
 
       if (!athlete) {
         skipped++
         continue
       }
+      if (athlete.created) athletesCreated++
 
       const result = await insertRecordWithPB(supabaseAdmin, {
         athlete_id: athlete.id,
@@ -94,7 +97,7 @@ export async function POST(request: NextRequest) {
       inserted_count: inserted,
       updated_count: pbUpdated,
       error_message: errors.length > 0 ? errors.slice(0, 10).join('\n') : null,
-      raw_log: { totalScraped: results.length, skipped, competitionName, eventType },
+      raw_log: { totalScraped: results.length, skipped, athletesCreated, competitionName, eventType },
     })
 
     return Response.json({
@@ -103,6 +106,7 @@ export async function POST(request: NextRequest) {
       inserted,
       pbUpdated,
       skipped,
+      athletesCreated,
       errors: errors.slice(0, 20),
     })
   } catch (e: any) {

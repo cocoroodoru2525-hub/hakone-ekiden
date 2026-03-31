@@ -208,6 +208,7 @@ export default function AdminPage() {
   }
 
   // --- 記録自動取得 ---
+  const [autoCreate, setAutoCreate] = useState(true)
   const [autoResult, setAutoResult] = useState<any>(null)
   const [compForm, setCompForm] = useState({
     url: '', eventType: 'half', competitionName: '', competedAt: ''
@@ -239,13 +240,14 @@ export default function AdminPage() {
           'Content-Type': 'application/json',
           'x-admin-key': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'hakone-admin-2026',
         },
+        body: JSON.stringify({ autoCreate }),
       })
       const data = await res.json()
       if (data.error) {
         setMsg('エラー: ' + data.error)
       } else {
         setAutoResult(data)
-        setMsg(`記録取得完了: ${data.totalScraped}件取得 / ${data.inserted}件新規 / ${data.pbUpdated}件PB更新`)
+        setMsg(`記録取得完了: ${data.totalScraped}件取得 / ${data.inserted}件新規 / ${data.pbUpdated}件PB更新${data.athletesCreated ? ` / ${data.athletesCreated}名新規選手追加` : ''}`)
         loadScrapeLogs()
       }
     } catch (e: any) {
@@ -273,13 +275,14 @@ export default function AdminPage() {
           eventType: compForm.eventType,
           competitionName: compForm.competitionName,
           competedAt: compForm.competedAt,
+          autoCreate,
         }),
       })
       const data = await res.json()
       if (data.error) {
         setMsg('エラー: ' + data.error)
       } else {
-        setMsg(`大会結果取込完了: ${data.totalScraped}件取得 / ${data.inserted}件新規 / ${data.pbUpdated}件PB更新`)
+        setMsg(`大会結果取込完了: ${data.totalScraped}件取得 / ${data.inserted}件新規 / ${data.pbUpdated}件PB更新${data.athletesCreated ? ` / ${data.athletesCreated}名新規選手追加` : ''}`)
         loadScrapeLogs()
       }
     } catch (e: any) {
@@ -551,6 +554,18 @@ export default function AdminPage() {
                   ekidenreki.com から最新のPBランキングを取得し、登録済み選手の記録を更新します。
                   毎日15:00 JST にVercel Cronで自動実行されますが、手動でも実行できます。
                 </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoCreate}
+                    onChange={e => setAutoCreate(e.target.checked)}
+                    className="w-4 h-4 accent-red-500"
+                  />
+                  <span className="text-xs text-gray-300">未登録の選手を自動追加する</span>
+                </label>
               </div>
 
               <button

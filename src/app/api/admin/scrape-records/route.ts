@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { scrapeAllEventRecords } from '@/lib/scrapers/records-scraper'
 import { insertRecordWithPB } from '@/lib/pb-detector'
+import { findOrCreateAthlete } from '@/lib/find-or-create-athlete'
 
 export async function POST(request: NextRequest) {
   const adminKey = request.headers.get('x-admin-key')
@@ -10,6 +11,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const body = await request.json().catch(() => ({}))
+    const autoCreate = (body as any).autoCreate ?? false
+
     // 全チームを取得
     const { data: teams } = await supabaseAdmin
       .from('hk_teams')
@@ -25,6 +29,7 @@ export async function POST(request: NextRequest) {
     let inserted = 0
     let skipped = 0
     let pbUpdated = 0
+    let athletesCreated = 0
     const errors: string[] = []
 
     for (const rec of allRecords) {
@@ -40,18 +45,17 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // 選手を検索
-      const { data: athlete } = await supabaseAdmin
-        .from('hk_athletes')
-        .select('id')
-        .eq('name', rec.athlete_name)
-        .eq('team_id', team.id)
-        .maybeSingle()
+      // 選手を検索（autoCreate時は自動作成）
+      const athlete = await findOrCreateAthlete(
+        supabaseAdmin, rec.athlete_name, team.id,
+        { autoCreate, grade: rec.grade }
+      )
 
       if (!athlete) {
         skipped++
         continue
       }
+      if (athlete.created) athletesCreated++
 
       const result = await insertRecordWithPB(supabaseAdmin, {
         athlete_id: athlete.id,
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest) {
       inserted_count: inserted,
       updated_count: pbUpdated,
       error_message: errors.length > 0 ? errors.slice(0, 10).join('\n') : null,
-      raw_log: { totalScraped: allRecords.length, skipped },
+      raw_log: { totalScraped: allRecords.length, skipped, athletesCreated },
     })
 
     return Response.json({
@@ -89,6 +93,7 @@ export async function POST(request: NextRequest) {
       inserted,
       pbUpdated,
       skipped,
+      athletesCreated,
       errors: errors.slice(0, 20),
     })
   } catch (e: any) {

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { scrapeAllEventRecords } from '@/lib/scrapers/records-scraper'
 import { insertRecordWithPB } from '@/lib/pb-detector'
+import { findOrCreateAthlete } from '@/lib/find-or-create-athlete'
 
 export async function GET(request: NextRequest) {
   // Vercel Cronからの呼び出しを認証
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     let inserted = 0
     let skipped = 0
     let pbUpdated = 0
+    let athletesCreated = 0
 
     for (const rec of allRecords) {
       // チームマッチング
@@ -37,15 +39,14 @@ export async function GET(request: NextRequest) {
       )
       if (!team) { skipped++; continue }
 
-      // 選手を検索
-      const { data: athlete } = await supabaseAdmin
-        .from('hk_athletes')
-        .select('id')
-        .eq('name', rec.athlete_name)
-        .eq('team_id', team.id)
-        .maybeSingle()
+      // 選手を検索、未登録なら自動作成（Cronは常にautoCreate=true）
+      const athlete = await findOrCreateAthlete(
+        supabaseAdmin, rec.athlete_name, team.id,
+        { autoCreate: true, grade: rec.grade }
+      )
 
       if (!athlete) { skipped++; continue }
+      if (athlete.created) athletesCreated++
 
       const result = await insertRecordWithPB(supabaseAdmin, {
         athlete_id: athlete.id,
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
       status: 'success',
       inserted_count: inserted,
       updated_count: pbUpdated,
-      raw_log: { totalScraped: allRecords.length, skipped },
+      raw_log: { totalScraped: allRecords.length, skipped, athletesCreated },
     })
 
     return Response.json({
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
       inserted,
       pbUpdated,
       skipped,
+      athletesCreated,
     })
   } catch (e: any) {
     try {
