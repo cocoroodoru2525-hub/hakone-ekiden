@@ -658,6 +658,21 @@ export default function AdminPage() {
         {/* 記事管理 */}
         {tab === 'post' && (
           <div className="space-y-6">
+            {/* Xテスト投稿 */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">X (Twitter) テスト投稿</p>
+                <p className="text-xs text-gray-500 mt-0.5">接続確認用のテストツイートを送信します</p>
+              </div>
+              <button
+                className="border border-sky-700 text-sky-400 hover:bg-sky-900 px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
+                disabled={xPosting !== null}
+                onClick={() => postToXApi('【テスト】箱根駅伝家族！サイト運営中です🏃 選手記録・PBランキング・応援スポット情報を発信中！ https://hakone-fan.com #箱根駅伝 #大学駅伝', -99)}
+              >
+                {xPosting === -99 ? '投稿中...' : 'Xにテスト投稿'}
+              </button>
+            </div>
+
             <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 flex flex-col gap-4">
               <h2 className="text-sm font-medium">{editingPost ? '記事を編集' : '新しい記事を作成'}</h2>
               <p className="text-xs text-gray-500">大会結果を取り込むと自動で記事が生成されます。手動でも作成できます。</p>
