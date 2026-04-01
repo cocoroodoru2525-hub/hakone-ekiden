@@ -17,6 +17,21 @@ const OFFICIAL_SPOTS = [
   { section: 5, name: '小田原中継所', lat: 35.2564, lng: 139.1556, tip: '4区→5区のたすきリレー。ここから山登りが始まる！' },
   { section: 5, name: '箱根湯本駅前', lat: 35.2321, lng: 139.1060, tip: '5区山登りの入り口。温泉街の雰囲気の中で応援。' },
   { section: 5, name: '箱根芦ノ湖ゴール', lat: 35.1966, lng: 139.0217, tip: '往路ゴール地点。芦ノ湖畔でフィニッシュを見届けよう！' },
+  // 復路（6区〜10区）
+  { section: 6, name: '箱根芦ノ湖スタート（復路）', lat: 35.1966, lng: 139.0217, tip: '復路スタート地点。山下りの6区が始まる！' },
+  { section: 6, name: '箱根小涌園前', lat: 35.2370, lng: 139.0550, tip: '6区山下り。急カーブの連続で選手のテクニックが光る。' },
+  { section: 6, name: '函嶺洞門', lat: 35.2400, lng: 139.0800, tip: '6区の名所。山下りのスピード区間。' },
+  { section: 7, name: '小田原中継所（復路）', lat: 35.2564, lng: 139.1556, tip: '6区→7区のたすきリレー。ここから平地に戻る。' },
+  { section: 7, name: '二宮駅前', lat: 35.3029, lng: 139.2572, tip: '7区のコース。朝の冷え込みが選手を苦しめることも。' },
+  { section: 8, name: '平塚中継所（復路）', lat: 35.3290, lng: 139.3494, tip: '7区→8区のたすきリレー地点。' },
+  { section: 8, name: '遊行寺坂', lat: 35.3520, lng: 139.4840, tip: '8区最大の難所。急坂を駆け上がる選手の力走に注目！' },
+  { section: 9, name: '戸塚中継所（復路）', lat: 35.3953, lng: 139.5332, tip: '8区→9区のたすきリレー。松の9区が始まる。' },
+  { section: 9, name: '横浜駅前（復路）', lat: 35.4660, lng: 139.6223, tip: '9区の中盤。復路のエース区間、逆転劇が起きることも。' },
+  { section: 9, name: '生麦付近', lat: 35.4890, lng: 139.6660, tip: '9区終盤。鶴見中継所に向けてラストスパート。' },
+  { section: 10, name: '鶴見中継所（復路）', lat: 35.5048, lng: 139.6821, tip: '9区→10区のたすきリレー。アンカー区間の始まり。' },
+  { section: 10, name: '蒲田付近', lat: 35.5625, lng: 139.7158, tip: '10区の序盤。沿道の声援が選手を後押しする。' },
+  { section: 10, name: '田町・三田付近', lat: 35.6460, lng: 139.7475, tip: '10区終盤。ゴールの大手町まであと少し！' },
+  { section: 10, name: '大手町ゴール（復路）', lat: 35.6867, lng: 139.7639, tip: '総合ゴール地点！感動のフィニッシュを見届けよう！' },
 ]
 
 type Spot = {
@@ -121,8 +136,10 @@ export default function SpotsPage() {
             <h2 className="text-sm font-medium mb-4 pb-2 border-b border-gray-800">
               <span className="text-red-400">公式</span> 応援おすすめスポット
             </h2>
-            <div className="flex flex-col gap-1">
-              {OFFICIAL_SPOTS.map((spot, i) => (
+
+            <h3 className="text-xs text-yellow-400 font-medium mt-3 mb-2">▶ 往路（1区〜5区）</h3>
+            <div className="flex flex-col gap-1 mb-4">
+              {OFFICIAL_SPOTS.filter(s => s.section <= 5).map((spot, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedSpot(spot)}
@@ -131,6 +148,24 @@ export default function SpotsPage() {
                   }`}
                 >
                   <span className="bg-red-600 text-white text-xs px-1.5 py-0.5 rounded w-8 text-center flex-shrink-0">
+                    {spot.section}区
+                  </span>
+                  <span className="flex-1">{spot.name}</span>
+                </button>
+              ))}
+            </div>
+
+            <h3 className="text-xs text-blue-400 font-medium mt-3 mb-2">◀ 復路（6区〜10区）</h3>
+            <div className="flex flex-col gap-1">
+              {OFFICIAL_SPOTS.filter(s => s.section >= 6).map((spot, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedSpot(spot)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded text-left hover:bg-gray-900 transition text-sm ${
+                    selectedSpot === spot ? 'bg-gray-900 border border-gray-700' : ''
+                  }`}
+                >
+                  <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded w-8 text-center flex-shrink-0">
                     {spot.section}区
                   </span>
                   <span className="flex-1">{spot.name}</span>
