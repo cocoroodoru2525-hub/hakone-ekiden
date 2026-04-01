@@ -237,6 +237,37 @@ export default function AdminPage() {
     setPostForm({ title: post.title, body: post.body, category: post.category })
   }
 
+  // --- X (Twitter) 投稿 ---
+  const [xPosting, setXPosting] = useState<number | null>(null)
+
+  async function postToXApi(text: string, postId?: number) {
+    if (xPosting !== null) return
+    setXPosting(postId ?? -1)
+    try {
+      const res = await fetch('/api/admin/post-x', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'hakone-admin-2026',
+        },
+        body: JSON.stringify({ text }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setMsg('X投稿エラー: ' + data.error)
+      } else {
+        setMsg(`Xに投稿しました (ID: ${data.tweetId ?? '---'})`)
+      }
+    } catch (e: any) {
+      setMsg('X投稿エラー: ' + e.message)
+    }
+    setXPosting(null)
+  }
+
+  function buildTweetText(title: string, slug: string): string {
+    return `${title}\n\nhttps://hakone-fan.com/news/${slug}\n#箱根駅伝`
+  }
+
   // --- 学校追加 ---
   const [teamForm, setTeamForm] = useState({
     name: '', short_name: '', color_code: '#C8102E', sort_order: '', category: 'main'
@@ -664,6 +695,15 @@ export default function AdminPage() {
                     キャンセル
                   </button>
                 )}
+                {editingPost && editingPost.slug && (
+                  <button
+                    className="border border-gray-600 text-gray-300 hover:text-white hover:border-sky-500 px-4 py-2 rounded text-sm flex items-center gap-1.5"
+                    disabled={xPosting !== null}
+                    onClick={() => postToXApi(buildTweetText(editingPost.title, editingPost.slug), editingPost.id)}
+                  >
+                    {xPosting === editingPost.id ? '投稿中...' : 'Xに投稿'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -684,6 +724,13 @@ export default function AdminPage() {
                       </span>
                       <span className="flex-1">{post.title}</span>
                       <span className="text-xs text-gray-600">{new Date(post.created_at).toLocaleDateString('ja-JP')}</span>
+                      <button
+                        onClick={() => postToXApi(buildTweetText(post.title, post.slug), post.id)}
+                        className="text-xs text-gray-500 hover:text-sky-400 disabled:opacity-50"
+                        disabled={xPosting !== null}
+                      >
+                        {xPosting === post.id ? '投稿中...' : 'Xに投稿'}
+                      </button>
                       <button onClick={() => editPost(post)} className="text-xs text-gray-400 hover:text-white">編集</button>
                       <button onClick={() => deletePost(post.id)} className="text-xs text-gray-600 hover:text-red-400">削除</button>
                     </div>

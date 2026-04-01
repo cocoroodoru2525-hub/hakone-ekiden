@@ -5,6 +5,7 @@ import { insertRecordWithPB } from '@/lib/pb-detector'
 import { findOrCreateAthlete } from '@/lib/find-or-create-athlete'
 import { findOrCreateTeam } from '@/lib/find-or-create-team'
 import { generatePostFromResults } from '@/lib/post-generator'
+import { postToX } from '@/lib/x-poster'
 
 export async function POST(request: NextRequest) {
   const adminKey = request.headers.get('x-admin-key')
@@ -108,6 +109,26 @@ export async function POST(request: NextRequest) {
       { inserted, pbUpdated }
     )
 
+    // X (Twitter) に自動投稿
+    let xPostResult: { success: boolean; tweetId?: string; error?: string } | null = null
+    if (inserted > 0 && post?.slug) {
+      try {
+        const top3 = results.slice(0, 3)
+        const topLines = top3
+          .map((r, i) => `${i + 1}. ${r.athlete_name} ${r.time_display}`)
+          .join('\n')
+        const tweetText =
+          `【大会結果】${competitionName} ${eventType}\n` +
+          `上位:\n${topLines}\n\n` +
+          `詳細: https://hakone-fan.com/news/${post.slug}\n` +
+          `#箱根駅伝 #大学駅伝`
+        xPostResult = await postToX(tweetText)
+      } catch (e: any) {
+        console.error('[X auto-post error]', e)
+        xPostResult = { success: false, error: e.message }
+      }
+    }
+
     await supabaseAdmin.from('hk_scrape_logs').insert({
       scrape_type: 'competition',
       source_url: url,
@@ -127,6 +148,7 @@ export async function POST(request: NextRequest) {
       athletesCreated,
       teamsCreated,
       postSlug: post?.slug ?? null,
+      xPost: xPostResult ?? null,
       errors: errors.slice(0, 20),
     })
   } catch (e: any) {

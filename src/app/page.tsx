@@ -34,6 +34,7 @@ export default async function Home() {
           <a href="/records" className="hover:text-white">選手記録</a>
           <a href="/news" className="hover:text-white">ニュース</a>
           <a href="/admin" className="hover:text-white">管理</a>
+          <a href="https://x.com/hakone_fan" target="_blank" rel="noopener noreferrer" className="hover:text-white" title="X (Twitter)">𝕏</a>
         </nav>
       </header>
 
