@@ -452,7 +452,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-gray-950 text-white">
       <header className="bg-black border-b border-gray-800 px-6 py-3 flex items-center justify-between">
         <div>
-          <span className="text-lg font-medium tracking-wide">箱根駅伝DATA</span>
+          <span className="text-lg font-medium tracking-wide">箱根駅伝家族！</span>
           <span className="ml-3 text-xs text-gray-500">管理画面</span>
         </div>
         <a href="/" className="text-xs text-gray-400 hover:text-white">&larr; サイトに戻る</a>

@@ -2,7 +2,7 @@ export default function DisclaimerPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <header className="bg-black border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <a href="/" className="text-lg font-medium tracking-wide">箱根駅伝DATA</a>
+        <a href="/" className="text-lg font-medium tracking-wide">箱根駅伝家族！</a>
         <nav className="flex gap-6 text-sm text-gray-400">
           <a href="/" className="hover:text-white">トップ</a>
           <a href="/teams" className="hover:text-white">出場校</a>
@@ -16,7 +16,7 @@ export default function DisclaimerPage() {
         <div className="text-sm text-gray-300 leading-relaxed flex flex-col gap-6">
           <section>
             <h2 className="text-base font-medium text-white mb-2">当サイトの情報について</h2>
-            <p>箱根駅伝DATA（以下「当サイト」）は、箱根駅伝をはじめとする大学長距離競技の非公式ファンサイトです。当サイトに掲載されている選手記録・成績データは、公開されている情報を基に集計したものであり、公式記録とは異なる場合があります。正確な公式記録については、関東学生陸上競技連盟等の公式サイトをご確認ください。</p>
+            <p>箱根駅伝家族！（以下「当サイト」）は、箱根駅伝をはじめとする大学長距離競技の非公式ファンサイトです。当サイトに掲載されている選手記録・成績データは、公開されている情報を基に集計したものであり、公式記録とは異なる場合があります。正確な公式記録については、関東学生陸上競技連盟等の公式サイトをご確認ください。</p>
           </section>
 
           <section>
@@ -37,7 +37,7 @@ export default function DisclaimerPage() {
           <section>
             <h2 className="text-base font-medium text-white mb-2">当サイトの運営について</h2>
             <div className="mt-2 text-gray-400">
-              <p>サイト名: 箱根駅伝DATA</p>
+              <p>サイト名: 箱根駅伝家族！</p>
               <p>URL: <a href="https://hakone-fan.com" className="text-red-400">https://hakone-fan.com</a></p>
               <p>お問い合わせ: <a href="mailto:hakone-fan@outlook.jp" className="text-red-400">hakone-fan@outlook.jp</a></p>
               <p>X (Twitter): <a href="https://x.com/hakone_fan" target="_blank" rel="noopener noreferrer" className="text-red-400">@hakone_fan</a></p>

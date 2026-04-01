@@ -2,7 +2,7 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <header className="bg-black border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <a href="/" className="text-lg font-medium tracking-wide">箱根駅伝DATA</a>
+        <a href="/" className="text-lg font-medium tracking-wide">箱根駅伝家族！</a>
         <nav className="flex gap-6 text-sm text-gray-400">
           <a href="/" className="hover:text-white">トップ</a>
           <a href="/teams" className="hover:text-white">出場校</a>
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <h1 className="text-2xl font-medium mb-8">プライバシーポリシー</h1>
 
         <div className="text-sm text-gray-300 leading-relaxed flex flex-col gap-6">
-          <p>箱根駅伝DATA（以下「当サイト」）は、ユーザーの個人情報の取り扱いについて、以下のとおりプライバシーポリシーを定めます。</p>
+          <p>箱根駅伝家族！（以下「当サイト」）は、ユーザーの個人情報の取り扱いについて、以下のとおりプライバシーポリシーを定めます。</p>
 
           <section>
             <h2 className="text-base font-medium text-white mb-2">1. 個人情報の収集について</h2>
@@ -69,7 +69,7 @@ export default function PrivacyPage() {
             <h2 className="text-base font-medium text-white mb-2">9. お問い合わせ</h2>
             <p>当サイトのプライバシーポリシーに関するお問い合わせは、下記までご連絡ください。</p>
             <div className="mt-2 text-gray-400">
-              <p>サイト名: 箱根駅伝DATA</p>
+              <p>サイト名: 箱根駅伝家族！</p>
               <p>URL: <a href="https://hakone-fan.com" className="text-red-400">https://hakone-fan.com</a></p>
               <p>メール: <a href="mailto:hakone-fan@outlook.jp" className="text-red-400">hakone-fan@outlook.jp</a></p>
             </div>

@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "家族で楽しむ！箱根駅伝DATA | 選手記録・PBランキング・応援サイト",
-  description: "家族で箱根駅伝をもっと楽しもう！出場校の選手記録をリアルタイムで追跡。5000m・10000m・ハーフマラソンのPBランキング、大会結果、選手応援メッセージ機能を搭載。",
+  title: "箱根駅伝家族！| 選手への応援投稿機能付き！応援特化型、箱根駅伝サイト",
+  description: "選手への応援投稿機能付き！応援特化型の箱根駅伝サイト。出場校の選手記録をリアルタイムで追跡。5000m・10000m・ハーフマラソンのPBランキング、大会結果も掲載。",
   keywords: "箱根駅伝, 駅伝, 大学駅伝, 選手記録, PB, ランキング, 応援, 陸上競技, 長距離",
   openGraph: {
-    title: "家族で楽しむ！箱根駅伝DATA",
-    description: "家族で箱根駅伝をもっと楽しもう！選手記録をリアルタイムで追跡するファンサイト",
+    title: "箱根駅伝家族！",
+    description: "選手への応援投稿機能付き！応援特化型の箱根駅伝サイト",
     url: "https://hakone-fan.com",
-    siteName: "箱根駅伝DATA",
+    siteName: "箱根駅伝家族！",
     locale: "ja_JP",
     type: "website",
   },
@@ -54,9 +54,9 @@ export default function RootLayout({
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
               <div>
-                <div className="text-sm font-medium text-white mb-2">箱根駅伝DATA</div>
+                <div className="text-sm font-medium text-white mb-2">箱根駅伝家族！</div>
                 <p className="text-xs text-gray-500 max-w-sm">
-                  家族みんなで箱根駅伝をもっと楽しもう！選手の年間記録をリアルタイムで追跡する非公式ファンサイトです。
+                  選手への応援投稿機能付き！応援特化型の箱根駅伝サイト。選手の年間記録をリアルタイムで追跡しています。
                 </p>
               </div>
               <div className="flex gap-8">
@@ -78,7 +78,7 @@ export default function RootLayout({
               </div>
             </div>
             <div className="border-t border-gray-800 mt-6 pt-4 text-center">
-              <p className="text-xs text-gray-600">&copy; 2026 箱根駅伝DATA. All rights reserved. 非公式ファンサイト</p>
+              <p className="text-xs text-gray-600">&copy; 2026 箱根駅伝家族！. All rights reserved. 非公式ファンサイト</p>
             </div>
           </div>
         </footer>

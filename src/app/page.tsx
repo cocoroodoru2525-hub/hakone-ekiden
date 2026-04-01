@@ -25,8 +25,8 @@ export default async function Home() {
       {/* ヘッダー */}
       <header className="bg-black border-b border-gray-800 px-6 py-3 flex items-center justify-between">
         <div>
-          <span className="text-lg font-medium tracking-wide">箱根駅伝DATA</span>
-          <span className="ml-3 text-xs text-gray-500 tracking-widest">家族で楽しむ！箱根駅伝サイト</span>
+          <span className="text-lg font-medium tracking-wide">箱根駅伝家族！</span>
+          <span className="ml-3 text-xs text-gray-500 tracking-widest">応援特化型・箱根駅伝サイト</span>
         </div>
         <nav className="flex gap-6 text-sm text-gray-400">
           <a href="/" className="text-white">トップ</a>
@@ -40,8 +40,8 @@ export default async function Home() {
       {/* ヒーロー */}
       <section className="bg-black px-6 py-8 border-b border-gray-800">
         <p className="text-red-500 text-xs tracking-widest mb-2 font-medium">2027年1月 第103回大会に向けて</p>
-        <h1 className="text-3xl font-medium mb-2">家族で楽しむ！箱根駅伝DATA</h1>
-        <p className="text-gray-400 text-sm">推し選手を見つけよう！出場校の5000m・10000m・ハーフのベスト記録を集約。大会ごとの結果も随時更新。</p>
+        <h1 className="text-3xl font-medium mb-2">箱根駅伝家族！</h1>
+        <p className="text-gray-400 text-sm">【選手への応援投稿】機能付き！応援特化型、箱根駅伝サイト。推し選手を見つけて応援しよう！</p>
         <div className="flex gap-4 mt-6">
           <div className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-center">
             <div className="text-2xl font-medium">{teams?.length ?? 0}</div>

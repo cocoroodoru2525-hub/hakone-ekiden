@@ -2,7 +2,7 @@ export default function ContactPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <header className="bg-black border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <a href="/" className="text-lg font-medium tracking-wide">箱根駅伝DATA</a>
+        <a href="/" className="text-lg font-medium tracking-wide">箱根駅伝家族！</a>
         <nav className="flex gap-6 text-sm text-gray-400">
           <a href="/" className="hover:text-white">トップ</a>
           <a href="/teams" className="hover:text-white">出場校</a>
@@ -14,7 +14,7 @@ export default function ContactPage() {
         <h1 className="text-2xl font-medium mb-8">お問い合わせ</h1>
 
         <div className="text-sm text-gray-300 leading-relaxed flex flex-col gap-6">
-          <p>箱根駅伝DATAに関するお問い合わせは、以下の方法でご連絡ください。</p>
+          <p>箱根駅伝家族！に関するお問い合わせは、以下の方法でご連絡ください。</p>
 
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 space-y-4">
             <div className="flex items-center gap-3">

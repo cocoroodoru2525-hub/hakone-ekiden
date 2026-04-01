@@ -94,7 +94,7 @@ export default function AthleteDetailPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <header className="bg-black border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <span className="text-lg font-medium tracking-wide">箱根駅伝DATA</span>
+        <span className="text-lg font-medium tracking-wide">箱根駅伝家族！</span>
         <nav className="flex gap-6 text-sm text-gray-400">
           <a href="/" className="hover:text-white">トップ</a>
           <a href="/teams" className="hover:text-white">出場校</a>
