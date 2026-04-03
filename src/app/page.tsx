@@ -43,16 +43,6 @@ export default async function Home() {
         <p className="text-red-500 text-xs tracking-widest mb-2 font-medium">2027年1月 第103回大会に向けて</p>
         <h1 className="text-3xl font-medium mb-2">箱根駅伝家族！</h1>
         <p className="text-gray-400 text-sm">【選手への応援投稿】機能付き！応援特化型、箱根駅伝サイト。推し選手を見つけて応援しよう！</p>
-        <div className="flex gap-4 mt-6">
-          <div className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-center">
-            <div className="text-2xl font-medium">{teams?.length ?? 0}</div>
-            <div className="text-xs text-gray-500 mt-1">出場校</div>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-center">
-            <div className="text-2xl font-medium">{records?.length ?? 0}</div>
-            <div className="text-xs text-gray-500 mt-1">記録件数</div>
-          </div>
-        </div>
       </section>
 
       {/* メインコンテンツ */}

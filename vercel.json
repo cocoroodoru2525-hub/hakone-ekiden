@@ -5,6 +5,10 @@
       "schedule": "0 6 * * *"
     },
     {
+      "path": "/api/cron/update-roster",
+      "schedule": "0 5 1 * *"
+    },
+    {
       "path": "/api/cron/monthly-ranking",
       "schedule": "0 7 1 * *"
     }
