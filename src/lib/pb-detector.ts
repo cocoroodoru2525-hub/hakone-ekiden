@@ -16,15 +16,29 @@ interface InsertResult {
   error?: string
 }
 
+// 種目ごとの最低タイム（秒）- これ未満は明らかに誤登録
+const MIN_TIME_SECONDS: Record<string, number> = {
+  half: 60 * 60,       // ハーフ: 60分未満は無効
+  '10000': 26 * 60,    // 10000m: 26分未満は無効
+  '5000': 13 * 60,     // 5000m: 13分未満は無効
+}
+
 /**
  * 記録を挿入し、PB（自己ベスト）を自動管理する
  * - 既存PBより速ければ、旧PBのis_pbをfalseにし、新記録をPBとして挿入
  * - 同じ選手・種目・大会・記録が既に存在する場合はスキップ
+ * - 種目ごとの最低タイム未満は無効データとして除外
  */
 export async function insertRecordWithPB(
   supabase: SupabaseClient,
   record: RecordInput
 ): Promise<InsertResult> {
+  // 明らかにおかしい記録を除外（駅伝区間タイムの誤混入など）
+  const minTime = MIN_TIME_SECONDS[record.event_type]
+  if (minTime && record.time_seconds < minTime) {
+    return { inserted: false, isPB: false }
+  }
+
   // 重複チェック
   const { data: dup } = await supabase
     .from('hk_records')
