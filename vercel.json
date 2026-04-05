@@ -9,6 +9,10 @@
       "schedule": "0 5 1 * *"
     },
     {
+      "path": "/api/cron/update-students-top10",
+      "schedule": "0 4 1 * *"
+    },
+    {
       "path": "/api/cron/monthly-ranking",
       "schedule": "0 7 1 * *"
     }
